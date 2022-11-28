@@ -1,0 +1,79 @@
+---
+title: "ahffk"
+output: github_document
+author: "KIM MINYOUNG"
+---
+
+# 0.환경설정
+```{r 패키지}
+rm(list=ls())
+suppressPackageStartupMessages({
+    require(googledrive)
+    #require(DataExplorer)
+    require(dplyr)
+    require(data.table)
+    require(magrittr)
+    #require(stringr)
+    #require(lubridate)
+    #require(zoo)
+})
+
+drive_auth()
+```
+
+```{r 드라이브}
+#drive_ls("2022_03/data",  pattern="train_input") %>% View(title="train")
+train_in_id = drive_ls("2022_03/data",  pattern="train_input") $id
+train_in_ls = drive_ls(path = as_id(train_in_id))
+train_in_ls %<>% arrange(name)
+
+train_out_id = drive_ls("2022_03/data",  pattern="train_target") $id
+train_out_ls = drive_ls(path = as_id(train_out_id))
+train_out_ls %<>% arrange(name)
+
+
+final <- NULL
+for (i in 1:nrow(train_in_ls)){
+    drive_download(as_id(train_in_ls[i,]), overwrite = TRUE)
+    drive_download(as_id(train_out_ls[i,]), overwrite = TRUE)
+    file = assign(train_in_ls$name[i], fread(train_in_ls$name[i],  encoding="UTF-8" ))
+    file$case = seq(1, i)
+    out =  assign(train_out_ls$name[i], fread(train_out_ls$name[i],  encoding="UTF-8" ))
+    file = cbind(file,out)
+    final = rbind(final, file)
+  cat(i ,"\n")
+}
+
+
+#dt1 %>%  head %>% View("dt1")
+#dt2 %>% head %>% View("dt12")
+
+
+final <- NULL
+for (i in 1:nrow(train_in_ls)){
+    drive_download(as_id(train_in_ls[i,]), overwrite = TRUE)
+    
+	for(j in 1:nrow(train_out_ls)){
+    drive_download(as_id(train_out_ls[i,]), overwrite = TRUE)
+    file = assign(train_in_ls$name[j], fread(train_in_ls$name[j],  encoding="UTF-8" ))
+    file$case = seq(1, j)
+    out =  assign(train_out_ls$name[j], fread(train_out_ls$name[j],  encoding="UTF-8" ))
+    file = cbind(file,out)
+    final = rbind(final, file)
+  cat(j ,"\n")
+}
+}
+
+
+
+
+
+
+```
+
+
+dt0 %>% head
+dt1 %>% tail
+ls()
+
+31-3
