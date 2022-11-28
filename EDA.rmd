@@ -1,0 +1,41 @@
+---
+title: "ahffk"
+output: github_document
+author: "KIM MINYOUNG"
+---
+
+# 0.환경설정
+```{r 패키지}
+suppressPackageStartupMessages({
+    require(googledrive)
+    #require(DataExplorer)
+    require(dplyr)
+    require(data.table)
+    require(magrittr)
+    #require(stringr)
+    #require(lubridate)
+    #require(zoo)
+})
+```
+
+```{r 드라이브}
+drive_auth()
+#drive_ls("2022_03/data",  pattern="train_input") %>% View(title="train")
+drv_id = drive_ls("2022_03/data",  pattern="train_input") $id
+file_ls = drive_ls(path = as_id(drv_id))
+file_ls %<>% arrange(name)
+
+for (i in 1:nrow(file_ls)){
+    drive_download(as_id(file_ls[i,]), overwrite = TRUE)
+    assign(paste0("dt",i), fread(file_ls$name[i],  encoding="UTF-8" ))
+  cat("\n",i)
+}
+
+ls()
+
+
+dt1 %>%  head %>% View("dt1")
+dt2 %>% head %>% View("dt12")
+
+```
+
