@@ -90,3 +90,6 @@ for (i in 1:nrow(train_out_ls)){
 
     cat(i,"번째","완료" ,"\n")
 }
+# https://dacon.io/competitions/official/235897/codeshare/4883
+# https://cysics.github.io/%EB%8D%B0%EC%9D%B4%EC%BD%98/eda/EDA/
+# https://2stndard.tistory.com/128 시계열
