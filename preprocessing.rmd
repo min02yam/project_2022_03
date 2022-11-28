@@ -9,10 +9,11 @@ author: "KIM MINYOUNG"
 rm(list=ls())
 suppressPackageStartupMessages({
     require(googledrive)
-    #require(DataExplorer)
+    require(DataExplorer)
     require(dplyr)
     require(data.table)
     require(magrittr)
+    require(imputeTS)
     #require(stringr)
     #require(lubridate)
     #require(zoo)
@@ -27,53 +28,65 @@ train_in_id = drive_ls("2022_03/data",  pattern="train_input") $id
 train_in_ls = drive_ls(path = as_id(train_in_id))
 train_in_ls %<>% arrange(name)
 
-train_out_id = drive_ls("2022_03/data",  pattern="train_target") $id
-train_out_ls = drive_ls(path = as_id(train_out_id))
-train_out_ls %<>% arrange(name)
-
-
 final <- NULL
 for (i in 1:nrow(train_in_ls)){
     drive_download(as_id(train_in_ls[i,]), overwrite = TRUE)
-    drive_download(as_id(train_out_ls[i,]), overwrite = TRUE)
     file = assign(train_in_ls$name[i], fread(train_in_ls$name[i],  encoding="UTF-8" ))
-    file$case = seq(1, i)
-    out =  assign(train_out_ls$name[i], fread(train_out_ls$name[i],  encoding="UTF-8" ))
-    file = cbind(file,out)
-    final = rbind(final, file)
-  cat(i ,"\n")
-}
-
-
-#dt1 %>%  head %>% View("dt1")
-#dt2 %>% head %>% View("dt12")
-
-
-final <- NULL
-for (i in 1:nrow(train_in_ls)){
-    drive_download(as_id(train_in_ls[i,]), overwrite = TRUE)
     
-	for(j in 1:nrow(train_out_ls)){
-    drive_download(as_id(train_out_ls[i,]), overwrite = TRUE)
-    file = assign(train_in_ls$name[j], fread(train_in_ls$name[j],  encoding="UTF-8" ))
-    file$case = seq(1, j)
-    out =  assign(train_out_ls$name[j], fread(train_out_ls$name[j],  encoding="UTF-8" ))
-    file = cbind(file,out)
+    file$DAT =file$DAT+1
+    file$case = rep(i, nrow(file))
     final = rbind(final, file)
-  cat(j ,"\n")
+
+    cat(i,"번째","완료","^^" ,"\n")
 }
-}
+
+final %>% head
+```
 
 
+```{r 결측치처리}
+#plot_intro(final)
+#final %>% summary
+#final %>% head %>%  View()
+final[내부온도관측치<4 | 내부온도관측치>40,내부온도관측치 := NA]
+final[co2관측치>1200,내부온도관측치 :=NA]
+final[시간당백색광량<0 | 시간당백색광량>120000,시간당백색광량 := NA]
+final[일간누적백색광량<0 | 일간누적백색광량>2880000,일간누적백색광량 := NA]
+final[시간당적색광량<0 | 시간당적색광량>120000,시간당적색광량 := NA]
+final[일간누적적색광량<0 | 일간누적적색광량>2880000,일간누적적색광량 := NA]
+final[시간당청색광량<0 | 시간당청색광량>120000,시간당청색광량 := NA]
+final[일간누적청색광량<0 |  일간누적청색광량>2880000, 일간누적청색광량 := NA]
+final[시간당총광량<0 | 시간당총광량>120000,시간당총광량 := NA]
+final[일간누적총광량<0 |  일간누적총광량>2880000,  일간누적총광량 := NA]
+```
 
 
+```{r 결측치대체}
 
+final %>% head
+
+
+ggplot_na_distribution(final$내부온도관측치)
 
 ```
 
 
-dt0 %>% head
-dt1 %>% tail
-ls()
 
-31-3
+
+train_out_id = drive_ls("2022_03/data",  pattern="train_target") $id
+train_out_ls = drive_ls(path = as_id(train_out_id))
+train_out_ls %<>% arrange(name)
+
+drive_download(as_id(train_out_ls[1,]), overwrite = TRUE)
+out_1 = assign(train_out_ls$name[1], fread(train_out_ls$name[1],  encoding="UTF-8" ))
+out_1 %>% head
+out_1 %>% tail
+output <- NULL
+for (i in 1:nrow(train_out_ls)){
+    drive_download(as_id(train_out_ls[i,]), overwrite = TRUE)
+    file = assign(train_out_ls$name[i], fread(train_out_ls$name[i],  encoding="UTF-8" ))
+    file$case = rep(i, nrow(file))
+    output = rbind(output, file)
+
+    cat(i,"번째","완료" ,"\n")
+}
