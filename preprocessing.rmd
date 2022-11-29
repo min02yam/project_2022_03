@@ -91,9 +91,7 @@ co2관측치 102
 
 시간당백색광량, 시간당적색광량,시간당청색광량,시간당총광량 1 -> `case6`에 1개로 모두 같음
 
-
-
-```{r 시간 변수}
+```{r 시간 변수 조정}
 #step1. 시간
 final %>% mutate(new_obs_time = substr(obs_time,1,5),
     new_obs_time = parse_date_time(new_obs_time, orders="HM"),
@@ -105,16 +103,24 @@ final %>% mutate(new_obs_time = substr(obs_time,1,5),
     select(!obs_time) -> tmp
 
 # new_obs_time = as.POSIXlt(substr(new_obs_time,12,13),"%H")
-
-?hour
-?as.Date
 tmp %>% str
-tmp$new_obs_time %>% table
+#tmp %>% str
+#tmp$new_obs_time %>% table
+```
 
+```{r 결측치대체}
+#step1. ts 생성 (1시간 FREQUENCY)
 
+?ts
 
+ts = ts(tmp, frequency = 1, start=0, end=23) 
+
+# 주기랑 end 계산하기 
+ts %>% head(25)
+tmp %>% filter(case==1) %>% View("case1")
 
 ```
+
 
 
 
