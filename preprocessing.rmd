@@ -15,7 +15,7 @@ suppressPackageStartupMessages({
     require(magrittr)
     require(imputeTS)
     #require(stringr)
-    #require(lubridate)
+    require(lubridate)
     #require(zoo)
 })
 
@@ -40,7 +40,7 @@ for (i in 1:nrow(train_in_ls)){
     cat(i,"번째","완료","^^" ,"\n")
 }
 
-final %>% head
+#final %>% head
 ```
 
 
@@ -49,7 +49,7 @@ final %>% head
 #final %>% summary
 #final %>% head %>%  View()
 final[내부온도관측치<4 | 내부온도관측치>40,내부온도관측치 := NA]
-final[co2관측치>1200,내부온도관측치 :=NA]
+final[co2관측치>1200,co2관측치 :=NA]
 final[시간당백색광량<0 | 시간당백색광량>120000,시간당백색광량 := NA]
 final[일간누적백색광량<0 | 일간누적백색광량>2880000,일간누적백색광량 := NA]
 final[시간당적색광량<0 | 시간당적색광량>120000,시간당적색광량 := NA]
@@ -61,12 +61,58 @@ final[일간누적총광량<0 |  일간누적총광량>2880000,  일간누적총
 ```
 
 
-```{r 결측치대체}
+```{r 결측치탐색}
+colSums(is.na(final))
+#plot_missing(final)
+#final %>% head
+#which(is.na(final))
 
-final %>% head
+final[is.na(내부온도관측치), .N, by=case]
+final[is.na(co2관측치), .N, by=case]
+final[is.na(시간당백색광량), .N, by=case]
+final[is.na(시간당적색광량), .N, by=case]
+final[is.na(시간당청색광량), .N, by=case]
+final[is.na(시간당총광량), .N, by=case]
+
+#ggplot_na_distribution(final$내부온도관측치)
+
+```
+
+내부온도 관측치 13
+`case4` 1
+`case8` 2
+`case26` 10
+
+co2관측치 102
+`case1` 4
+`case3` 96
+`case4` 1
+`case27` 1
+
+시간당백색광량, 시간당적색광량,시간당청색광량,시간당총광량 1 -> `case6`에 1개로 모두 같음
 
 
-ggplot_na_distribution(final$내부온도관측치)
+
+```{r 시간 변수}
+#step1. 시간
+final %>% mutate(new_obs_time = substr(obs_time,1,5),
+    new_obs_time = parse_date_time(new_obs_time, orders="HM"),
+    new_obs_time = case_when(
+        grepl("[59]", new_obs_time) ~ new_obs_time + minutes(1),
+        TRUE ~ new_obs_time),
+    new_obs_time = hour(new_obs_time)
+    ) %>% 
+    select(!obs_time) -> tmp
+
+# new_obs_time = as.POSIXlt(substr(new_obs_time,12,13),"%H")
+
+?hour
+?as.Date
+tmp %>% str
+tmp$new_obs_time %>% table
+
+
+
 
 ```
 
@@ -90,6 +136,3 @@ for (i in 1:nrow(train_out_ls)){
 
     cat(i,"번째","완료" ,"\n")
 }
-# https://dacon.io/competitions/official/235897/codeshare/4883
-# https://cysics.github.io/%EB%8D%B0%EC%9D%B4%EC%BD%98/eda/EDA/
-# https://2stndard.tistory.com/128 시계열
