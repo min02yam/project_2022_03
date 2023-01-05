@@ -1,0 +1,190 @@
+---
+title: "multiple linear regression analysis- ver.01.2"
+author: "김민영"
+date: "2023-01-05"
+output: github_document
+---
+
+# 환경설정
+
+```{r 패키지}
+#rm(list=ls())
+suppressPackageStartupMessages({
+  require(googledrive)
+  require(dplyr)
+  require(data.table)
+  require(magrittr)
+  require(caret)
+  require(leaps) #회귀
+  require(car) #회귀
+})
+drive_auth()
+```
+
+
+```{r 데이터 로드}
+id = drive_ls("2022_03/data/tmp",  pattern="train_final")$id 
+tmp = tempfile(fileext = ".csv")
+drive_download(as_id(id), path = tmp, overwrite = TRUE)
+DT_scaled = fread(tmp)
+
+id2 = drive_ls("2022_03/data/tmp",  pattern="test_final")$id 
+tmp2 = tempfile(fileext = ".csv")
+drive_download(as_id(id2), path = tmp2, overwrite = TRUE)
+DT_test_scaled = fread(tmp2)
+
+```
+
+
+# 1. 베이직 피팅
+```{r, 피팅}
+fit=lm(predicted_weight_g ~., DT_scaled[,-'case'])
+fit %>% summary
+```
+
+```{r, 잔차진단}
+par(mfrow=c(2,2))
+plot(fit)
+
+```
+
+# 2. 이차항 반영
+```{r , 쿼드라틱 반영}
+#함수생성
+my_func = function(x){
+  x = x^2
+  return(x)
+}
+
+num_vars = names(DT_scaled)
+new_num_vars = paste0('squared_', num_vars)
+DT_scaled[, (new_num_vars) := lapply(.SD, my_func), .SDcols = num_vars]
+
+
+fit2=lm(predicted_weight_g ~., 
+        DT_scaled[,-c('case','squared_case','squared_predicted_weight_g')])   # 	Adjusted R-squared:  0.8409 
+
+fit2 %>% summary
+
+```
+
+```{r, 잔차진단}
+par(mfrow=c(2,2))
+plot(fit2)
+```
+
+# 3. 변수선택
+```{r, 셀렉션}
+fit2_sub=regsubsets(predicted_weight_g ~., 
+        DT_scaled[,-c('squared_case','squared_predicted_weight_g')])
+
+summary(fit2_sub)  %>% str   
+```
+
+```{r, }
+#case1. 전부 스퀘어 한거에서 
+plot(fit2_sub, scale="Cp")
+
+```
+
+```{r}
+
+fit2_cp = lm(predicted_weight_g ~ 
+               range_ec관측치 + range_하루적색광량 + squared_DAT + squared_median_ec관측치 + squared_median_하루청색광량 + squared_range_하루분무량 +       
+               squared_총적적색광량+ squared_총적청색광량, 
+             DT_scaled[,-c('squared_case','squared_predicted_weight_g')])
+
+
+summary(fit2_cp) # Adjusted R-squared:  0.816 
+
+range_ec관측지, range_하루적색광량, squared_DAT, squared_median_ec관측치, squared_median_하루청색광량, squared_range_하루분무량 , squared_총적적색광량, squared_총적청색광량
+```
+
+# 4. 다중공선성
+```{r, 다중공선성}
+vif(fit2_cp) 
+```
+
+# 5. 검정
+```{r, 검정}
+anova(fit2_cp)  # 다 매우 유의
+```
+
+# 6. 후보 모형 생성
+```{r, 처음부터 유의한거로만 ㄱㄱ}
+fit3 = lm(predicted_weight_g ~ 
+            median_co2관측치 + median_ec관측치 + median_하루청색광량 + range_내부습도관측치 + range_co2관측치 + range_하루백색광량 + range_하루청색광량 + 총적백색광량 + 총적청색광량 +
+            squared_DAT + squared_median_co2관측치 + squared_median_ec관측치 + squared_median_하루청색광량 + squared_range_내부습도관측치+ squared_range_co2관측치+
+            squared_range_하루백색광량+ squared_range_하루적색광량 + squared_range_하루청색광량 + squared_총적백색광량+ squared_총적청색광량,
+          DT_scaled[,-c('case','squared_case','squared_predicted_weight_g')])
+
+summary(fit3) # Adjusted R-squared:  0.7819 
+
+
+fit3_sub = regsubsets(predicted_weight_g ~ 
+            median_co2관측치 + median_ec관측치 + median_하루청색광량 + range_내부습도관측치 + range_co2관측치 + range_하루백색광량 + range_하루청색광량 + 총적백색광량 + 총적청색광량 +
+            squared_DAT + squared_median_co2관측치 + squared_median_ec관측치 + squared_median_하루청색광량 + squared_range_내부습도관측치+ squared_range_co2관측치+
+            squared_range_하루백색광량+ squared_range_하루적색광량 + squared_range_하루청색광량 + squared_총적백색광량+ squared_총적청색광량,
+          DT_scaled[,-c('case','squared_case','squared_predicted_weight_g')])
+
+
+
+summary(fit3_sub) 
+plot(fit3_sub, scale="Cp")
+
+
+fit3_cp = lm(predicted_weight_g ~
+               median_co2관측치 + range_하루백색광량 + 총적청색광량 + squared_DAT + 
+               squared_median_co2관측치 + squared_median_하루청색광량 + squared_range_하루백색광량 + squared_총적청색광량 , 
+             DT_scaled[,-c('case','squared_case','squared_predicted_weight_g')]
+             )
+
+summary(fit3_cp) # Adjusted R-squared:  0.7683 
+
+```
+
+
+```{r, BIC}
+plot(fit2_sub, scale="bic") 
+
+
+fit2_bic = lm(predicted_weight_g ~ 
+                range_ec관측치 + range_하루적색광량 + squared_DAT + squared_median_ec관측치 + squared_median_하루청색광량 + squared_range_하루분무량 +
+                squared_총적적색광량+ squared_총적청색광량,
+              DT_scaled[,-c('case','squared_case','squared_predicted_weight_g')]
+)
+summary(fit2_bic) # Adjusted R-squared:  0.816 , cp 기준과 같음
+
+```
+
+#7. 테스트셋 적용
+
+```{r}
+num_vars = names(DT_test_scaled)
+new_num_vars = paste0('squared_', num_vars)
+DT_test_scaled[, (new_num_vars) := lapply(.SD, my_func), .SDcols = num_vars]
+
+
+pred= predict(fit2_cp, DT_test_scaled[,-c('case','squared_case','squared_predicted_weight_g')])
+
+submission = fread("sample_submission (1).csv")
+submission[,'predicted_weight_g']  = pred
+submission %>% head
+submission$case = DT_test$case 
+
+```
+
+#6. 저장
+```{r, 저장}
+DT_scaled %>% write.csv("train13.csv", row.names=FALSE)
+DT_test_scaled   %>% write.csv("test13.csv", row.names=FALSE)
+
+drive_upload("train13.csv",
+             path = "2022_03/data/train13.csv",
+             overwrite = TRUE)
+
+drive_upload("test13.csv",
+             path = "2022_03/data/test13.csv",
+             overwrite = TRUE)
+```
+
