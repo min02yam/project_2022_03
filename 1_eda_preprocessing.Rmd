@@ -92,7 +92,8 @@ final[is.na(시간당총광량), .N, by=case]
 final %>% mutate(new_obs_time = substr(obs_time,1,5),
     new_obs_time = parse_date_time(new_obs_time, orders="HM"),
     new_obs_time = case_when(
-        grepl("[59]", new_obs_time) ~ new_obs_time + minutes(1),
+        grepl("[59]", new_obs_time) ~ new_obs_time + minut
+        (1),
         TRUE ~ new_obs_time),
     hour = hour(new_obs_time),
     new_time = parse_date_time(paste0('2022-12-',as.character(DAT)," ",as.character(hour)), orders="ymdH")
@@ -111,7 +112,6 @@ plot_density(tmp[,-c('case','DAT','hour')])
 cmp %>% mutate(case = as.factor(case)) ->cmp2
 
 
-esquisser()
 ggplot(cmp2) +
   aes(
     x = new_time,
