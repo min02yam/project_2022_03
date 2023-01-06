@@ -1,4 +1,6 @@
 # project_2022_03
+`development environment`
+window 64bit, R 4.2.1, Python Google Colab Pro
 
 ![image](https://user-images.githubusercontent.com/93497667/210768173-330192c6-bc03-46e4-9bc7-bdb970c2d756.png)
 
