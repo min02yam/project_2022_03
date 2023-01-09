@@ -443,7 +443,7 @@ data.table::rbindlist(imp_list_test) -> cmp_test
 
 ```{r}
 #step1. 삭제
-cmp_test %<>% select(-일간누적총광량, 시간당총광량)
+cmp_test %<>% select(-일간누적총광량, -시간당총광량)
 
 cmp_test %>% select(case, DAT, hour, contains('누적')) %>%
   filter(hour == 23) %>%
