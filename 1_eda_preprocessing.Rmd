@@ -34,7 +34,7 @@ for (i in 1:nrow(train_in_ls)){
     drive_download(as_id(train_in_ls[i,]), overwrite = TRUE)
     file = assign(train_in_ls$name[i], fread(train_in_ls$name[i],  encoding="UTF-8" ))
     
-    file$DAT =file$DAT+1
+    file$DAT =file$DAT+1 #시차반영
     file$case = rep(i, nrow(file))
     final = rbind(final, file)
     cat(i,"번째","완료","^^" ,"\n")
@@ -108,7 +108,6 @@ par(mfrow=c(1,2))
 plot_histogram(tmp[,-c('case','DAT','hour')])
 plot_density(tmp[,-c('case','DAT','hour')])
 
-
 cmp %>% mutate(case = as.factor(case)) ->cmp2
 
 
@@ -122,7 +121,6 @@ ggplot(cmp2) +
   geom_line(size = 0.5) +
   scale_color_hue(direction = 1) +
   theme_gray()
-
 ```
 
 
@@ -312,18 +310,15 @@ cmp %>% select(case, DAT, hour, contains('누적')) %>%
 feature = cmp[,c("case","DAT","내부온도관측치","내부습도관측치","co2관측치","ec관측치","시간당분무량","시간당백색광량", "시간당적색광량", "시간당청색광량")]
 cmp_median = feature[,
                    lapply(.SD, median),
-                   by=.(case, DAT)
-                   ]
+                   by=.(case, DAT)]
 
 cmp_max = feature[,
                   lapply(.SD, max),
-                  by=.(case, DAT)
-                  ]
+                  by=.(case, DAT)]
 
 cmp_min = feature[,
                   lapply(.SD, min),
-                  by=.(case, DAT)
-                  ]
+                  by=.(case, DAT)]
 
 cmp_range = cmp_max - cmp_min
 
@@ -393,13 +388,11 @@ for (i in 1:nrow(test_target_ls)){
 
 ```
 
-
 ```{r test basic eda}
 test_input %>% summary()
 plot_missing(test_input)
 
 ```
-
 
 ```{r}
 test_input %>% summary()
@@ -457,18 +450,15 @@ cmp_test %>% select(case, DAT, hour, contains('누적')) %>%
 feature = cmp_test[,c("case","DAT","내부온도관측치","내부습도관측치","co2관측치","ec관측치","시간당분무량","시간당백색광량", "시간당적색광량", "시간당청색광량")]
 cmp_test_median = feature[,
                    lapply(.SD, median),
-                   by=.(case, DAT)
-                   ]
+                   by=.(case, DAT)]
 
 cmp_test_max = feature[,
                   lapply(.SD, max),
-                  by=.(case, DAT)
-                  ]
+                  by=.(case, DAT)]
 
 cmp_test_min = feature[,
                   lapply(.SD, min),
-                  by=.(case, DAT)
-                  ]
+                  by=.(case, DAT)]
 
 cmp_test_range = cmp_test_max - cmp_test_min
 
@@ -502,7 +492,7 @@ DT %>% head
 ```
 
 
-#5. 스케일링(r회귀분석에서만 씀, python은 파이프라인 생성)
+#5. 스케일링(r 회귀분석에서만, python은 파이프라인 생성)
 ```{r, 스케일}
 min_max_norm = preProcess(DT[,-c(23)], method = c("range"))
 
